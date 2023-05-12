@@ -1,3 +1,6 @@
+using back.data;
+using Microsoft.EntityFrameworkCore;
+
 var corsAllowedOrigins = "https://localhost";
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,6 +12,13 @@ options.AddPolicy(corsAllowedOrigins, policy =>
 	policy.AllowAnyHeader();
 }
 ));
+
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+builder.Services.AddDbContext<DataContext>(options =>
+{
+	options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
+});
 
 // Add services to the container.
 
