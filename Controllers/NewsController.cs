@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 namespace back.Controllers
 {
 	[ApiController]
-	[Route("api/[controller]")]
+	[Route("api/")]
 	public class NewsController : ControllerBase
 	{
 		private readonly DataContext _context;
@@ -17,9 +17,11 @@ namespace back.Controllers
 		}
 
 		[HttpGet]
+		[Route("news")]
 		public async Task<ActionResult<List<News>>> GetAllNews()
 		{
 			var newses = await _context.Newses.ToListAsync();
+			
 
 			return Ok(newses);
 		}
