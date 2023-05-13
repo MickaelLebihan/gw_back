@@ -1,7 +1,7 @@
 using back.data;
 using Microsoft.EntityFrameworkCore;
 
-var corsAllowedOrigins = "https://localhost";
+var corsAllowedOrigins = "http://localhost";
 
 var builder = WebApplication.CreateBuilder(args);
 
