@@ -21,9 +21,20 @@ namespace back.Controllers
 		public async Task<ActionResult<List<News>>> GetAllNews()
 		{
 			var newses = await _context.Newses.ToListAsync();
-			
 
 			return Ok(newses);
+		}
+
+		[HttpPost]
+		[Route("news/add")]
+		public async Task<ActionResult<List<News>>> AddNews(News news)
+		{
+
+			await _context.Newses.AddAsync(news);
+
+			_context.SaveChanges();
+
+			return Ok(news);
 		}
 	}
 }
