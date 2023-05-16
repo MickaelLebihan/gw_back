@@ -21,6 +21,7 @@ namespace back.Controllers
 		public async Task<ActionResult<List<News>>> GetAllNews()
 		{
 			var newses = await _context.Newses.ToListAsync();
+			
 
 			return Ok(newses);
 		}
