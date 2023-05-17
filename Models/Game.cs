@@ -1,5 +1,8 @@
-﻿namespace back.Models
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace back.Models
 {
+	[Table("games")]
 	public class Game
 	{
 		public int Id { get; set; }
