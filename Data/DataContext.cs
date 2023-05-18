@@ -1,11 +1,12 @@
 ﻿using back.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace back.data
 {
-	public class DataContext : DbContext
+	public class DataContext : IdentityDbContext
 	{
-		public DataContext(DbContextOptions options) : base(options) {
+		public DataContext(DbContextOptions<DataContext> options) : base(options) {
 		}
 
 		public DbSet<Game> Games { get; set; }
