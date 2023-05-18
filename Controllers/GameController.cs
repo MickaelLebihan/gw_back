@@ -20,7 +20,7 @@ namespace back.Controllers
 		[Route("games")]
 		public async Task<ActionResult<List<Game>>> GetAllGames()
 		{
-			var games = await _context.Games.ToListAsync();
+			var games = await _context.Games.Include(g => g.Platforms).Include(g => g.GameEngine).Include(g => g.Genres).ToListAsync();
 
 
 			return Ok(games);

@@ -11,13 +11,13 @@ namespace back.Models
 		public DateTime? EstimatedReleaseDate { get; set; }
 		public string Title { get; set; }
 		public string Description { get; set; }
-		public List<Platform>? Platform { get; set; } = new List<Platform>();
+		public List<Platform>? Platforms { get; set; } = new List<Platform>();
 		public DevPriority? DevPriority { get; set; }
 		public int? UsersScore { get; set; }
 		public GameEngine? GameEngine { get; set; }
 		public int? Budget { get; set; }
 		public DevStatus? DevStatus { get; set; }
-		public List<Genre>? Genre { get; set; } = new List<Genre>();
+		public List<Genre>? Genres { get; set; } = new List<Genre>();
 		public int? MinPlayer { get; set; }
 		public int? MaxPlayer { get; set; }
 	}
