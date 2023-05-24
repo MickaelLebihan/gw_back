@@ -1,12 +1,15 @@
 ﻿using back.Dto;
 using back.OtherObjects;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using System.Data;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json.Serialization;
 
 namespace back.Controllers
 {
@@ -46,6 +49,31 @@ namespace back.Controllers
 			await _roleManager.CreateAsync(new IdentityRole(StaticUserRoles.COMMUNITY_MANAGER));
 
 			return Ok("Ajout des Roles de base effectué");
+		}
+
+		[HttpPost]
+		[Route("seed-admin")]
+		public async Task<IActionResult> SeedAdmin()
+		{
+			IdentityUser admin = new IdentityUser()
+			{
+				UserName = "fakeAdmin",
+				Email = "fake.admin@gmail.com",
+				SecurityStamp = Guid.NewGuid().ToString(),
+			};
+
+			var isExistsUser = await _userManager.FindByNameAsync(admin.UserName);
+
+			if (isExistsUser != null)
+			{
+				return BadRequest("L'utilisateur existe déjà");
+			}
+
+			await _userManager.CreateAsync(admin, "fakeadmin123");
+
+			await _userManager.AddToRoleAsync(admin, StaticUserRoles.ADMIN);
+
+			return Ok("l'admin a bien été crée");
 		}
 
 		[HttpPost]
@@ -113,7 +141,35 @@ namespace back.Controllers
 
 			var token = GenerateNewJsonWebToken(authClaims);
 
+
 			return Ok(token);
+		}
+
+		[HttpGet]
+		[Route("user")]
+		[Authorize]
+		public async Task<IActionResult> GetUserInfo()
+		{
+			string userId = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+
+			// Utiliser le UserManager pour récupérer l'utilisateur à partir de l'ID
+			 IdentityUser user = await _userManager.FindByIdAsync(userId);
+
+			if (user == null)
+			{
+				return NotFound();
+			}
+
+			var roles = _userManager.GetRolesAsync(user).Result.ToList();
+
+			var userDto = new UserDto
+			{
+				Username = user.UserName,
+				Email = user.Email,
+				Roles = roles
+			};
+
+			return Ok(userDto);
 		}
 
 		private string GenerateNewJsonWebToken(List<Claim> claims)
