@@ -25,5 +25,17 @@ namespace back.Controllers
 
 			return Ok(games);
 		}
+
+		[HttpPost]
+		[Route("game/add")]
+		public async Task<ActionResult<List<Game>>>AddGame(Game game)
+		{
+			//var game = new Game();
+			await _context.Games.AddAsync(game);
+			_context.SaveChanges();
+
+
+			return Ok(game);
+		}
 	}
 }
