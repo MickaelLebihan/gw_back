@@ -9,8 +9,8 @@ namespace back.Models
 		public DateTime CreateDate { get; set; }
 		public DateTime? UpdatedAt { get; set; }
 		public DateTime? EstimatedReleaseDate { get; set; }
-		public string Title { get; set; }
-		public string Description { get; set; }
+		public string Title { get; set; } = string.Empty;
+		public string Description { get; set; } = string.Empty;
 		public List<Platform>? Platforms { get; set; } = new List<Platform>();
 		public DevPriority? DevPriority { get; set; }
 		public int? UsersScore { get; set; }
