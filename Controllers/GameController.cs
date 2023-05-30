@@ -1,10 +1,12 @@
 ﻿using back.data;
+using back.Dto;
 using back.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace back.Controllers
 {
+
 	[ApiController]
 	[Route("/api")]
 	public class GameController : ControllerBase
@@ -36,14 +38,73 @@ namespace back.Controllers
     
 		[HttpPost]
 		[Route("game/add")]
-		public async Task<ActionResult<List<Game>>>AddGame(Game game)
+		//[Authorize(Roles = StaticUserRoles.ADMIN)]
+		public async Task<ActionResult<Game>>AddGame([FromBody] GameDto game)
 		{
-			//var game = new Game();
-			await _context.Games.AddAsync(game);
+			var newGame = new Game {
+
+				Title = game.Title,
+				Description = game.Description,
+
+				MinPlayer = game.MinPlayer,
+				MaxPlayer = game.MaxPlayer,
+			};
+
+			if(game.Platforms != null)
+			{
+				foreach(int platformId in game.Platforms)
+					{
+						var platform = await _context.Platforms.FirstOrDefaultAsync(g => g.Id == platformId);
+						newGame.Platforms.Add(platform);
+					}
+			} else {
+				var newPlatform = new Platform
+				{
+					Name = game.NewPlatformName
+				};
+				_context.Platforms.Add(newPlatform);
+				newGame.Platforms.Add(newPlatform);
+			}
+			
+			
+			if(game.Genres != null)
+			{
+				foreach(int genreId in game.Genres)
+				{
+					var genre = await _context.Genres.FirstOrDefaultAsync(g => g.Id == genreId);
+					newGame.Genres.Add(genre);
+				}
+			} else
+			{
+				var newGenre = new Genre
+				{
+					Name = game.NewGenreName
+				};
+				_context.Genres.Add(newGenre);
+				newGame.Genres.Add(newGenre);
+			}
+
+			if (game.GameEngine != null)
+			{
+				var engine = await _context.GameEngines.FirstOrDefaultAsync(g => g.Id == game.GameEngine);
+				newGame.GameEngine = engine;
+			}
+			else
+			{
+				var newEngine = new GameEngine
+				{
+					Name = game.NewEngineName
+				};
+				_context.GameEngines.Add(newEngine);
+				newGame.GameEngine = newEngine;
+			}
+
+
+			await _context.Games.AddAsync(newGame);
 			_context.SaveChanges();
 
 
-			return Ok(game);
+			return Ok(newGame);
 		}
 	}
 }
