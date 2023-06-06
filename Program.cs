@@ -1,9 +1,11 @@
 using back.data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using back.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Pomelo.EntityFrameworkCore.MySql.Internal;
 
 var corsAllowedOrigins = "http://localhost";
 
@@ -26,7 +28,7 @@ builder.Services.AddDbContext<DataContext>(options =>
 
 // Add Identity
 builder.Services
-	.AddIdentity<IdentityUser, IdentityRole>()
+	.AddIdentity<User, IdentityRole>()
 	.AddEntityFrameworkStores<DataContext>()
 	.AddDefaultTokenProviders();
 

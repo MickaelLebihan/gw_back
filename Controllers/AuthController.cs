@@ -1,4 +1,5 @@
 ﻿using back.Dto;
+using back.Models;
 using back.OtherObjects;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -17,11 +18,11 @@ namespace back.Controllers
 	[ApiController]
 	public class AuthController : ControllerBase
 	{
-		private readonly UserManager<IdentityUser> _userManager;
+		private readonly UserManager<User> _userManager;
 		private readonly RoleManager<IdentityRole> _roleManager;
 		private readonly IConfiguration _configuration;
 
-		public AuthController(UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager, IConfiguration configuration)
+		public AuthController(UserManager<User> userManager, RoleManager<IdentityRole> roleManager, IConfiguration configuration)
 		{
 			_userManager = userManager;
 			_roleManager = roleManager;
@@ -52,28 +53,56 @@ namespace back.Controllers
 		}
 
 		[HttpPost]
-		[Route("seed-admin")]
-		public async Task<IActionResult> SeedAdmin()
+		[Route("seed-users")]
+		public async Task<IActionResult> SeedUsers()
 		{
-			IdentityUser admin = new IdentityUser()
-			{
-				UserName = "fakeAdmin",
-				Email = "fake.admin@gmail.com",
-				SecurityStamp = Guid.NewGuid().ToString(),
-			};
 
-			var isExistsUser = await _userManager.FindByNameAsync(admin.UserName);
-
-			if (isExistsUser != null)
+			var users = new string[]{ "user", "admin", "cm", "producer" };
+			foreach(var userName in users)
 			{
-				return BadRequest("L'utilisateur existe déjà");
+				User newUser = new User()
+				{
+					UserName = "fake" + userName,
+					Email = "fake." + userName + "@gmail.com",
+					SecurityStamp = Guid.NewGuid().ToString(),
+				};
+			
+				var isExistsUser = await _userManager.FindByNameAsync(newUser.UserName);
+
+				if (isExistsUser != null)
+				{
+					return BadRequest("L'utilisateur existe déjà");
+				}
+
+				var password = newUser + "123";
+
+				await _userManager.CreateAsync(newUser, password);
+				var role = StaticUserRoles.USER;
+
+				switch (userName)
+				{
+					case "user":
+						role = StaticUserRoles.USER; break;
+					case "admin":
+						role = StaticUserRoles.ADMIN; break;
+					case "cm":
+						role = StaticUserRoles.COMMUNITY_MANAGER; break;
+					case "producer":
+						role = StaticUserRoles.PRODUCER; break;
+					default: return BadRequest("Aucun role ne correspond");
+				}
+
+				await _userManager.AddToRoleAsync(newUser, role);
 			}
+			//User admin = new User()
+			//{
+			//	UserName = "fakeadmin",
+			//	Email = "fake.admin@gmail.com",
+			//	SecurityStamp = Guid.NewGuid().ToString(),
+			//};
 
-			await _userManager.CreateAsync(admin, "fakeadmin123");
 
-			await _userManager.AddToRoleAsync(admin, StaticUserRoles.ADMIN);
-
-			return Ok("l'admin a bien été crée");
+			return Ok("les utilisateurs ont bien été crée");
 		}
 
 		[HttpPost]
@@ -87,7 +116,7 @@ namespace back.Controllers
 				return BadRequest("L'utilisateur existe déjà");
 			}
 
-			IdentityUser newUser = new IdentityUser()
+			User newUser = new User()
 			{
 				Email = registerDto.Email,
 				UserName = registerDto.UserName,
@@ -118,12 +147,12 @@ namespace back.Controllers
 			var user = await _userManager.FindByNameAsync(loginDto.UserName);
 
 			if (user is null)
-				return Unauthorized("informations de connection érronées");
+				return Unauthorized("nom de connection érronées");
 
 			var isPasswordCorrect = await _userManager.CheckPasswordAsync(user, loginDto.Password);
 
 			if (!isPasswordCorrect)
-				return Unauthorized("informations de connection érronées");
+				return Unauthorized("mdp de connection érronées");
 
 			var userRoles = await _userManager.GetRolesAsync(user);
 
@@ -145,41 +174,43 @@ namespace back.Controllers
 			return Ok(token);
 		}
 
-		[HttpGet]
-		[Route("user")]
-		[Authorize]
-		public async Task<IActionResult> GetUserInfo()
-		{
-			string userId = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+		//[HttpGet]
+		//[Route("user")]
+		//[Authorize]
+		//public async Task<IActionResult> GetUserInfo()
+		//{
+		//	string userId = User.FindFirst(ClaimTypes.NameIdentifier).Value;
 
-			// Utiliser le UserManager pour récupérer l'utilisateur à partir de l'ID
-			 IdentityUser user = await _userManager.FindByIdAsync(userId);
+		//	// Utiliser le UserManager pour récupérer l'utilisateur à partir de l'ID
+		//	 User user = await _userManager.FindByIdAsync(userId);
 
-			if (user == null)
-			{
-				return NotFound();
-			}
+		//	if (user == null)
+		//	{
+		//		return NotFound();
+		//	}
 
-			var roles = _userManager.GetRolesAsync(user).Result.ToList();
+		//	var roles = _userManager.GetRolesAsync(user).Result.ToList();
 
-			var userDto = new UserDto
-			{
-				Username = user.UserName,
-				Email = user.Email,
-				Roles = roles
-			};
+		//	var userDto = new UserDto
+		//	{
+		//		Username = user.UserName,
+		//		Email = user.Email,
+		//		Roles = roles
+		//	};
 
-			return Ok(userDto);
-		}
+		//	return Ok(userDto);
+		//}
 
 		private string GenerateNewJsonWebToken(List<Claim> claims)
 		{
+			var tokenExpiration = _configuration["JWT:Expiration"];
+
 			var authSecret = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
 
 			var tokenObject = new JwtSecurityToken(
 				issuer: _configuration["JWT:ValidIssuer"],
 				audience: _configuration["JWT:ValidAudience"],
-				expires: DateTime.Now.AddHours(1),
+				expires: DateTime.Now.AddHours(Double.Parse(tokenExpiration)),
 				claims: claims,
 				signingCredentials: new SigningCredentials(authSecret, SecurityAlgorithms.HmacSha256)
 				);
