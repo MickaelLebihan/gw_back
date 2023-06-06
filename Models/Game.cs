@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace back.Models
 {
@@ -6,7 +7,7 @@ namespace back.Models
 	public class Game
 	{
 		public int Id { get; set; }
-		public DateTime CreateDate { get; set; }
+		public DateTime CreateDate { get; set; } = DateTime.Now;
 		public DateTime? UpdatedAt { get; set; }
 		public DateTime? EstimatedReleaseDate { get; set; }
 		public string Title { get; set; } = string.Empty;
@@ -20,5 +21,8 @@ namespace back.Models
 		public List<Genre>? Genres { get; set; } = new List<Genre>();
 		public int? MinPlayer { get; set; }
 		public int? MaxPlayer { get; set; }
+
+		[JsonIgnore]
+		public List<User> Users { get; set; }
 	}
 }
