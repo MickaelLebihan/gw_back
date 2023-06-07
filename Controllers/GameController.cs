@@ -63,12 +63,12 @@ namespace back.Controllers
 		//[Authorize(Roles = StaticUserRoles.ADMIN)]
 		public async Task<ActionResult<Game>>AddGame([FromBody] GameDto game)
 		{
-			SlugHelper slugHelper = new SlugHelper();
+			SlugHelper slugger = new SlugHelper();
 
 			var newGame = new Game {
 
 				Title = game.Title,
-				Slug_Title = slugHelper.GenerateSlug(game.Title),
+				Slug_Title = slugger.GenerateSlug(game.Title),
 				Description = game.Description,
 
 				MinPlayer = game.MinPlayer,
