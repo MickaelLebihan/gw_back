@@ -24,6 +24,7 @@
 
 		public GameDto()
 		{
+
 			if (GameEngine == null)
 				GameEngine = null;
 			if (Platforms == null)
@@ -36,6 +37,7 @@
 				NewPlatformName = null;
 			if (NewGenre == null)
 				NewGenreName = null;
+
 		}
 
 	}

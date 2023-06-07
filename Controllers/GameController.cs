@@ -3,6 +3,7 @@ using back.Dto;
 using back.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Slugify;
 
 namespace back.Controllers
 {
@@ -24,26 +25,50 @@ namespace back.Controllers
 		{
 			var games = await _context.Games.Include(g => g.Platforms).Include(g => g.GameEngine).Include(g => g.Genres).ToListAsync();
 
+			SlugHelper slugger = new SlugHelper();
+
+			foreach (Game game in games)
+			{
+				if (game.Slug_Title == null)
+				{
+					game.Slug_Title = slugger.GenerateSlug(game.Title);
+					_context.SaveChanges();
+				}
+			}
+
 			return Ok(games);
 		}
 
 		[HttpGet]
-		[Route("game/{id}")]
-		public async Task<ActionResult<Game>> GetsingleGame(int id)
+		[Route("game/{slug}")]
+		//public async Task<ActionResult<Game>> GetsingleGame(int id)
+		public async Task<ActionResult<Game>> GetsingleGame(string slug)
 		{
-			var game = await _context.Games.Include(g => g.Platforms).Include(g => g.GameEngine).Include(g => g.Genres).FirstOrDefaultAsync(g => g.Id == id);
-	    return Ok(game);
+			var game = await _context.Games.Include(g => g.Platforms).Include(g => g.GameEngine).Include(g => g.Genres).FirstOrDefaultAsync(g => g.Slug_Title == slug);
+			return Ok(game);
 		}
-    
-    
+
+		[HttpGet]
+		[Route("game/{slug}/countFavorites")]
+		public async Task<ActionResult<List<Game>>> CountGamesFavorites(string slug)
+		{
+			var game = await _context.Games.Include(g => g.Users).FirstOrDefaultAsync(g => g.Slug_Title == slug);
+			var count = game.Users.Count();
+			return Ok(count);
+		}
+
+
 		[HttpPost]
 		[Route("game/add")]
 		//[Authorize(Roles = StaticUserRoles.ADMIN)]
 		public async Task<ActionResult<Game>>AddGame([FromBody] GameDto game)
 		{
+			SlugHelper slugHelper = new SlugHelper();
+
 			var newGame = new Game {
 
 				Title = game.Title,
+				Slug_Title = slugHelper.GenerateSlug(game.Title),
 				Description = game.Description,
 
 				MinPlayer = game.MinPlayer,

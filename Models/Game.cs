@@ -11,6 +11,7 @@ namespace back.Models
 		public DateTime? UpdatedAt { get; set; }
 		public DateTime? EstimatedReleaseDate { get; set; }
 		public string Title { get; set; } = string.Empty;
+		public string Slug_Title { get; set; }
 		public string Description { get; set; } = string.Empty;
 		public List<Platform>? Platforms { get; set; } = new List<Platform>();
 		public DevPriority? DevPriority { get; set; }
