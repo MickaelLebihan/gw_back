@@ -23,7 +23,7 @@ namespace back.Models
 		public int? MinPlayer { get; set; }
 		public int? MaxPlayer { get; set; }
 
-		[JsonIgnore]
+		//[JsonIgnore]
 		public List<User> Users { get; set; }
 	}
 }

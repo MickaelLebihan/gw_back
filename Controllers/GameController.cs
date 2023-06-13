@@ -4,9 +4,21 @@ using back.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Slugify;
+using System.Linq;
+using System.Text.Json.Serialization;
+using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace back.Controllers
 {
+
+	public class GameFilter
+	{
+		public string Title { get; set; } = string.Empty;
+		public List<int> Genres { get; set; } = new List<int>();
+		public List<int> Platforms { get; set; } = new List<int>();
+		public int DevStatus { get; set; } = 0;
+	}
 
 	[ApiController]
 	[Route("/api")]
@@ -19,40 +31,104 @@ namespace back.Controllers
 			_context = context;
 		}
 
+		//[HttpGet]
+		//[Route("games")]
+		//public async Task<ActionResult<List<Game>>> GetGames()
+		//{
+
+		//	var games = await _context.Games.Include(g => g.Platforms).Include(g => g.GameEngine).Include(g => g.Genres).ToListAsync();
+		//	//var games = await _context.Games.ToListAsync().FindAsync();
+
+		//	return Ok(games);
+		//}
+
 		[HttpGet]
 		[Route("games")]
-		public async Task<ActionResult<List<Game>>> GetAllGames()
+		public async Task<ActionResult<List<Game>>> FilterGames([FromQuery] GameFilter gamefilter)
 		{
-			var games = await _context.Games.Include(g => g.Platforms).Include(g => g.GameEngine).Include(g => g.Genres).ToListAsync();
 
-			SlugHelper slugger = new SlugHelper();
+			IQueryable<Game> gamesQuery = _context.Games;
 
-			foreach (Game game in games)
+			if (!string.IsNullOrEmpty(gamefilter.Title))
 			{
-				if (game.Slug_Title == null)
-				{
-					game.Slug_Title = slugger.GenerateSlug(game.Title);
-					_context.SaveChanges();
-				}
+				gamesQuery = gamesQuery.Where(g => g.Title.Contains(gamefilter.Title));
 			}
+
+			if (gamefilter.Genres != null && gamefilter.Genres.Count > 0)
+			{
+				gamesQuery = gamesQuery.Where(g => g.Genres.Any(genre => gamefilter.Genres.Contains(genre.Id)));
+			}
+
+			if (gamefilter.Platforms != null && gamefilter.Platforms.Count > 0)
+			{
+				gamesQuery = gamesQuery.Where(g => g.Platforms.Any(platform => gamefilter.Platforms.Contains(platform.Id)));
+			}
+
+			var games = await gamesQuery.ToListAsync();
+
+			//var games = await _context.Games.Where(g => Regex.IsMatch(gamefilter.Title,"[a-z]")).ToListAsync();
+			//var games = await _context.Games.Include(g => g.Platforms).Include(g => g.GameEngine).Include(g => g.Genres).ToListAsync();
+			//var games = await _context.Games.ToListAsync().FindAsync();
 
 			return Ok(games);
 		}
+
+		[HttpGet]
+		[Route("game_aux_data")]
+		public async Task<ActionResult<Dictionary<string, object>>> GetAuxData()
+		{
+			Dictionary<string, object> auxData = new();
+
+			var platforms = await _context.Platforms.ToListAsync();
+			var genres = await _context.Genres.ToListAsync();
+			var devStatuses = await _context.DevStatuses.ToListAsync();
+			var gameEngines = await _context.GameEngines.ToListAsync();
+
+			auxData.Add("platforms", platforms);
+			auxData.Add("genres", genres);
+			auxData.Add("devstatuses", devStatuses);
+			auxData.Add("gameengines", gameEngines);
+
+			return Ok(auxData);
+		}
+
+
 
 		[HttpGet]
 		[Route("game/{slug}")]
 		//public async Task<ActionResult<Game>> GetsingleGame(int id)
 		public async Task<ActionResult<Game>> GetsingleGame(string slug)
 		{
-			var game = await _context.Games.Include(g => g.Platforms).Include(g => g.GameEngine).Include(g => g.Genres).FirstOrDefaultAsync(g => g.Slug_Title == slug);
-			return Ok(game);
+			
+
+			var game = await _context.Games
+				.Include(g => g.Platforms)
+				.Include(g => g.GameEngine)
+				.Include(g => g.Genres)
+				.Include(g => g.Users)
+				.FirstOrDefaultAsync(g => g.Slug_Title == slug);
+
+			if (game == null)
+			{
+				return NotFound();
+			}
+
+			var options = new JsonSerializerOptions
+			{
+				ReferenceHandler = ReferenceHandler.Preserve
+			};
+
+			return Content(JsonSerializer.Serialize(game, options), "application/json");
 		}
 
 		[HttpGet]
 		[Route("game/{slug}/countFavorites")]
 		public async Task<ActionResult<List<Game>>> CountGamesFavorites(string slug)
 		{
-			var game = await _context.Games.Include(g => g.Users).FirstOrDefaultAsync(g => g.Slug_Title == slug);
+			var game = await _context.Games
+				.Include(g => g.Users)
+				.FirstOrDefaultAsync(g => g.Slug_Title == slug);
+
 			var count = game.Users.Count();
 			return Ok(count);
 		}
