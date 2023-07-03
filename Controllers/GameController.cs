@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text.Json.Serialization;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Microsoft.IdentityModel.Tokens;
 
 namespace back.Controllers
 {
@@ -17,7 +18,22 @@ namespace back.Controllers
 		public string Title { get; set; } = string.Empty;
 		public List<int> Genres { get; set; } = new List<int>();
 		public List<int> Platforms { get; set; } = new List<int>();
+		public int GameEngine { get; set; }
 		public int DevStatus { get; set; } = 0;
+	}
+
+	public class GamesListDto
+	{
+		public int Id { get; set; }
+		public string Title { get; set; }
+		public string Slug_Title { get; set; }
+		public List<int> Genres { get; set; } = new List<int>();
+		public List<int> Platforms { get; set; } = new List<int>();
+		public int GameEngine { get; set; }
+		public string Description { get; set; }
+		public int Min_player { get; set; }
+		public int Max_player { get; set; }
+
 	}
 
 	[ApiController]
@@ -47,7 +63,7 @@ namespace back.Controllers
 		public async Task<ActionResult<List<Game>>> FilterGames([FromQuery] GameFilter gamefilter)
 		{
 
-			IQueryable<Game> gamesQuery = _context.Games;
+			IQueryable<Game> gamesQuery = _context.Games.Include(g => g.Platforms).Include(g => g.GameEngine);
 
 			if (!string.IsNullOrEmpty(gamefilter.Title))
 			{
@@ -64,12 +80,27 @@ namespace back.Controllers
 				gamesQuery = gamesQuery.Where(g => g.Platforms.Any(platform => gamefilter.Platforms.Contains(platform.Id)));
 			}
 
+			if (gamefilter.GameEngine != 0)
+			{
+				gamesQuery = gamesQuery.Where(g => g.GameEngine.Id == gamefilter.GameEngine);
+			}
+
 			var games = await gamesQuery.ToListAsync();
 
-			//var games = await _context.Games.Where(g => Regex.IsMatch(gamefilter.Title,"[a-z]")).ToListAsync();
-			//var games = await _context.Games.Include(g => g.Platforms).Include(g => g.GameEngine).Include(g => g.Genres).ToListAsync();
-			//var games = await _context.Games.ToListAsync().FindAsync();
+		//	var gamesList = games.Select(entity => new GamesListDto
+		//	{
+		//		  Id = entity.Id,
+		//		  Title = entity.Title,
+		//		  Slug_Title = entity.Slug_Title,
+		//		  Genres = entity.Genres,
+		//		  Platforms = entity.Platforms,
+		//		  GameEngine = (int)entity.GameEngine,
+		//		  Description = entity.Description,
+		//		  Min_player = (int)entity.MinPlayer,
+		//		  Max_player = (int)entity.MaxPlayer
+		//}).ToList();
 
+		//	return Ok(gamesList);
 			return Ok(games);
 		}
 
@@ -96,7 +127,7 @@ namespace back.Controllers
 
 		[HttpGet]
 		[Route("game/{slug}")]
-		//public async Task<ActionResult<Game>> GetsingleGame(int id)
+		//public async Task<ActionResult<Game>> GetsingleGame( id)
 		public async Task<ActionResult<Game>> GetsingleGame(string slug)
 		{
 			

@@ -41,7 +41,9 @@ namespace back.Controllers
 			string userId = User.FindFirst(ClaimTypes.NameIdentifier).Value;
 
 			// Utiliser le UserManager pour récupérer l'utilisateur à partir de l'ID
-			User user = await _userManager.FindByIdAsync(userId);
+			User user = await _context.Users
+				.Include(u => u.Games)
+				.FirstOrDefaultAsync(u => u.Id == userId);
 
 			if (user == null)
 			{
@@ -49,12 +51,20 @@ namespace back.Controllers
 			}
 
 			var roles = _userManager.GetRolesAsync(user).Result.ToList();
+			var gamesList = user.Games.ToList();
+
+			var games = new List<int>();
+			foreach(var game in gamesList)
+			{
+				games.Add(game.Id);
+			} 
 
 			var userDto = new UserDto
 			{
 				Username = user.UserName,
 				Email = user.Email,
-				Roles = roles
+				Roles = roles,
+				FavoriteGames = games
 			};
 
 			return Ok(userDto);
