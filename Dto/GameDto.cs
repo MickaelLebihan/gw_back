@@ -31,11 +31,11 @@
 				Platforms = null;
 			if (Genres == null)
 				Genres = null;
-			if (NewEngine == null)
+			if (NewEngine == false)
 				NewEngineName = null;
-			if (NewPlatform == null)
+			if (NewPlatform == false)
 				NewPlatformName = null;
-			if (NewGenre == null)
+			if (NewGenre == false)
 				NewGenreName = null;
 
 		}

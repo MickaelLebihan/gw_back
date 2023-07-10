@@ -1,9 +1,15 @@
 ﻿using back.data;
 using back.Dto;
+using back.Migrations;
 using back.Models;
+using back.OtherObjects;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Slugify;
+using System.Linq;
+using System.Security.Claims;
 
 namespace back.Controllers
 {
@@ -14,9 +20,13 @@ namespace back.Controllers
 	{
 		private readonly DataContext _context;
 
-		public GameController(DataContext context)
+		private readonly IHttpContextAccessor _httpContextAccessor;
+
+
+		public GameController(IHttpContextAccessor httpContextAccessor, DataContext context)
 		{
 			_context = context;
+			_httpContextAccessor = httpContextAccessor;
 		}
 
 		[HttpGet]
@@ -41,10 +51,30 @@ namespace back.Controllers
 
 		[HttpGet]
 		[Route("game/{slug}")]
-		//public async Task<ActionResult<Game>> GetsingleGame(int id)
 		public async Task<ActionResult<Game>> GetsingleGame(string slug)
 		{
-			var game = await _context.Games.Include(g => g.Platforms).Include(g => g.GameEngine).Include(g => g.Genres).FirstOrDefaultAsync(g => g.Slug_Title == slug);
+			var user = _httpContextAccessor.HttpContext.User;
+
+			var roles = user.Claims.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value).ToList();
+
+			if(roles.Contains("ADMIN") || roles.Contains("PRODUCER")) {
+			
+				var gameWithBudget = await _context.Games
+					.Include(g => g.Platforms)
+					.Include(g => g.GameEngine)
+					.Include(g => g.Budgets)
+					.Include(g => g.Genres)
+					.FirstOrDefaultAsync(g => g.Slug_Title == slug);
+
+				return Ok(gameWithBudget);
+			}
+
+			var game = await _context.Games
+				.Include(g => g.Platforms)
+				.Include(g => g.GameEngine)
+				.Include(g => g.Genres)
+				.FirstOrDefaultAsync(g => g.Slug_Title == slug);
+
 			return Ok(game);
 		}
 
@@ -65,17 +95,37 @@ namespace back.Controllers
 		{
 			SlugHelper slugger = new SlugHelper();
 
+			var slug_title = slugger.GenerateSlug(game.Title);
+			var gameExist = _context.Games.Find(slug_title);
+
+
+			if (gameExist != null)
+			{
+				return Ok("Ce jeu existe déjà dans la base de donneés !");
+			}
+
 			var newGame = new Game {
 
 				Title = game.Title,
-				Slug_Title = slugger.GenerateSlug(game.Title),
+				Slug_Title = slug_title,
 				Description = game.Description,
 
 				MinPlayer = game.MinPlayer,
 				MaxPlayer = game.MaxPlayer,
 			};
 
-			if(game.Platforms != null)
+			if(game.Budget != null)
+			{
+				var budget = new Budget
+				{
+					Amount = (int)game.Budget,
+					Message = "initial budget"
+				};
+				_context.Budgets.Add(budget);
+				newGame.Budgets.Add(budget);
+			}
+
+			if (game.Platforms != null)
 			{
 				foreach(int platformId in game.Platforms)
 					{
@@ -130,6 +180,44 @@ namespace back.Controllers
 
 
 			return Ok(newGame);
+		}
+
+		[HttpPost]
+		[Route("game/{slug}/addBudget")]
+		[Authorize(Roles = StaticUserRoles.PRODUCER)]
+		public async Task<ActionResult<Game>> EditBudget(string slug, BudgetDto budgetDto)
+		{
+
+			var game = await _context.Games.Include(g => g.Budgets).FirstOrDefaultAsync(g => g.Slug_Title == slug);
+
+			if (game?.Budgets == null)
+			{
+				DateTime newEndDate;
+
+				if (budgetDto.EndDate == null)
+				{
+					newEndDate = new DateTime(DateTime.Now.Year + 1, 12, 31);
+				} else
+				{
+					newEndDate = budgetDto.EndDate;
+				}
+
+				var budget = new Budget
+				{
+					Amount = budgetDto.Amount,
+					Message = budgetDto.Message,
+					EndDate = newEndDate
+				};
+
+				_context.Budgets.Add(budget);
+				game.Budgets.Add(budget);
+			}
+
+
+			_context.SaveChanges();
+
+
+			return Ok(true);
 		}
 	}
 }

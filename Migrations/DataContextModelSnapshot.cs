@@ -147,6 +147,38 @@ namespace back.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("back.Models.Budget", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<int>("Amount")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreateDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("GameId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GameId");
+
+                    b.ToTable("Budgets");
+                });
+
             modelBuilder.Entity("back.Models.DevPriority", b =>
                 {
                     b.Property<int>("Id")
@@ -183,9 +215,6 @@ namespace back.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<int?>("Budget")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("CreateDate")
                         .HasColumnType("datetime(6)");
 
@@ -212,6 +241,7 @@ namespace back.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Slug_Title")
+                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("Title")
@@ -465,6 +495,17 @@ namespace back.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("back.Models.Budget", b =>
+                {
+                    b.HasOne("back.Models.Game", "Game")
+                        .WithMany("Budgets")
+                        .HasForeignKey("GameId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Game");
+                });
+
             modelBuilder.Entity("back.Models.Game", b =>
                 {
                     b.HasOne("back.Models.DevPriority", "DevPriority")
@@ -529,6 +570,11 @@ namespace back.Migrations
                         .HasForeignKey("UsersId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("back.Models.Game", b =>
+                {
+                    b.Navigation("Budgets");
                 });
 #pragma warning restore 612, 618
         }

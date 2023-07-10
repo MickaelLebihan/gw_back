@@ -17,7 +17,7 @@ namespace back.Models
 		public DevPriority? DevPriority { get; set; }
 		public int? UsersScore { get; set; }
 		public GameEngine? GameEngine { get; set; }
-		public int? Budget { get; set; }
+		public List<Budget>? Budgets { get; set; } = new List<Budget>();
 		public DevStatus? DevStatus { get; set; }
 		public List<Genre>? Genres { get; set; } = new List<Genre>();
 		public int? MinPlayer { get; set; }

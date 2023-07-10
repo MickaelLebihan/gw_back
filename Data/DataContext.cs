@@ -88,5 +88,6 @@ namespace back.data
 		public DbSet<News> Newses { get; set; }
 		public DbSet<Genre> Genres { get; set; }
 		public DbSet<Platform> Platforms { get; set; }
+		public DbSet<Budget> Budgets { get; set; }
 	}
 }
