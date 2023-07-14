@@ -23,3 +23,5 @@ COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "back.dll"]
 
 #RUN ../import_sql.sh
+
+CMD ASPNETCORE_URLS=http://*:$PORT dotnet HerokuApp.dll
