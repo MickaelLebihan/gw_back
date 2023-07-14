@@ -49,7 +49,15 @@ namespace back.Controllers
 			return Ok(games);
 		}
 
-		[HttpGet]
+        [HttpGet]
+        [Route("games")]
+        public async Task<ActionResult<List<Game>>> Test()
+        {
+
+            return Ok("ok !");
+        }
+
+        [HttpGet]
 		[Route("game/{slug}")]
 		public async Task<ActionResult<Game>> GetsingleGame(string slug)
 		{

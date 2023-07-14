@@ -24,4 +24,4 @@ ENTRYPOINT ["dotnet", "back.dll"]
 
 #RUN ../import_sql.sh
 
-CMD ASPNETCORE_URLS=http://*:$PORT dotnet HerokuApp.dll
+##CMD ASPNETCORE_URLS=http://*:$PORT dotnet HerokuApp.dll
