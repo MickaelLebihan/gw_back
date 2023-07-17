@@ -50,7 +50,7 @@ namespace back.Controllers
 		}
 
         [HttpGet]
-        [Route("games")]
+        [Route("games/test")]
         public async Task<ActionResult<List<Game>>> Test()
         {
 

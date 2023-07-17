@@ -7,7 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Pomelo.EntityFrameworkCore.MySql.Internal;
 
-var corsAllowedOrigins = "http://localhost";
+var corsAllowedOrigins = "*";
 
 var builder = WebApplication.CreateBuilder(args);
 
